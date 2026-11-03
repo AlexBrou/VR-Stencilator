@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2315161a%22/%3E%3Cpath d=%22M14 46 C22 18 42 18 50 46%22 stroke=%22%23ff3df0%22 stroke-width=%226%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2232%22 cy=%2226%22 r=%225%22 fill=%22%2300e5ff%22/%3E%3C/svg%3E">
+<title>VR-Stencilator · AR</title>
+<script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+</script>
+<style>
+  :root {
+    --bg: #15161a; --panel: #1e2026; --panel2: #262931; --line: #33363f;
+    --text: #e8e9ec; --muted: #9a9ea8; --accent: #ff3df0; --accent-ink: #1a0018; --warn: #ffb020;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  h1 { margin: 0; font-size: 26px; }
+  a { color: var(--accent); }
+  .lead { color: var(--muted); margin: 6px 0 20px; }
+  .note { background: #3a2a05; border: 1px solid #6b4d08; color: #ffd27a; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; }
+  .note:empty { display: none; }
+  .hint { color: var(--muted); font-size: 13px; }
+  .note.ok { background: #0c2e1c; border-color: #1f6b44; color: #a6f0c6; margin: 12px 0 0; }
+  .note.choice { background: var(--panel); border-color: var(--accent); color: var(--text); margin: 12px 0 0; }
+  .note.choice p { margin: 0 0 10px; }
+  .note[hidden] { display: none; }
+  .note.error { background: #3a0d12; border-color: #7a1f2a; color: #ffb3bd; margin: 14px 0 0; }
+  li .meta { display: grid; gap: 4px; min-width: 0; }
+  li .dims { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  li.bad { border-color: #c03447; }
+  li.bad .dims { color: #ff8a98; font-weight: 600; }
+  button { font: inherit; color: var(--text); cursor: pointer; }
+  .btn { padding: 12px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); font-weight: 600; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); width: 100%; padding: 16px; font-size: 18px; margin-top: 16px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .bar .hint { color: var(--muted); font-size: 13px; }
+  ol { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 10px; }
+  li { display: grid; grid-template-columns: 34px 88px 1fr auto; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  li .num { font-weight: 700; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+  li img { width: 88px; height: 66px; object-fit: contain; border-radius: 6px; background: repeating-conic-gradient(#3a3d45 0 25%, #2c2f36 0 50%) 0 0 / 12px 12px; }
+  li input { width: 100%; min-width: 0; background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 8px 10px; font: inherit; }
+  li .acts { display: flex; gap: 6px; }
+  li .acts button { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); }
+  li .acts button:disabled { opacity: .3; }
+  .empty { color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; padding: 28px; text-align: center; margin-top: 16px; }
+  details { margin-top: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details ul { padding-left: 20px; margin: 10px 0 4px; }
+  details li { display: list-item; background: none; border: 0; padding: 2px 0; }
+  kbd { background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font-size: 13px; }
+  canvas { display: none; }
+  @media (max-width: 520px) {
+    li { grid-template-columns: 64px 1fr; }
+    li .num { display: none; }
+    li img { width: 64px; height: 48px; }
+    li .acts { grid-column: 1 / -1; justify-content: flex-end; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>VR-Stencilator <span style="color:var(--muted);font-weight:500">AR</span></h1>
+    <a href="index.html">Maker →</a>
+  </header>
+  <p class="lead">Load one or more images as layers of the same picture: for example the outline, the finished painting, and both together. Place them once on a wall or table, then switch layers while you draw.</p>
+
+  <div class="note" id="support"></div>
+
+  <div class="bar">
+    <button class="btn" id="addBtn">Add images…</button>
+    <button class="btn" id="openProjBtn">Open project…</button>
+    <button class="btn" id="saveProjBtn" disabled>Save project</button>
+    <input type="file" id="file" accept="image/*" multiple hidden>
+    <input type="file" id="projFile" accept=".zip,application/zip" hidden>
+  </div>
+  <p class="hint" style="margin:8px 0 0">All layers share the same spot, size and rotation. Layer 1 shows first. <b>Save project</b> downloads a .zip with your layers, settings and placement, which you can open again later.</p>
+  <div class="note ok" id="projMsg"></div>
+  <div class="note choice" id="placeChoice" hidden></div>
+  <div class="empty" id="empty">No images yet. Add the PNGs you made in the Maker, or any picture.</div>
+  <ol id="list"></ol>
+  <div class="note error" id="sizeError" role="alert"></div>
+
+  <button class="btn primary" id="startBtn" disabled>Start AR</button>
+
+  <details>
+    <summary>How to use</summary>
+    <ul>
+      <li><b>Set up the surface (most accurate):</b> in the menu, pick <i>Surface → Wall</i> or <i>Floor / table</i>. Hold a controller flat against the surface and pull its trigger. Move about half a meter to the side, touch the surface again and pull the trigger. The image then sticks exactly to that surface. If it looks slightly in front of or behind the real wall, adjust it with <i>Depth</i>. <i>Auto</i> uses the Quest’s own wall detection instead.</li>
+      <li><b>Place:</b> point at a wall or table. The image follows your pointer. Pull the trigger (or pinch) to stick it there.</li>
+      <li><b>Menu:</b> point at the floating menu and pull the trigger (or pinch) to press buttons.</li>
+      <li><b>Right thumbstick:</b> ← → rotate, ↑ ↓ resize. <b>Hold the right trigger</b> + ← → to move the image closer to you or further into the surface (depth). <b>Left thumbstick:</b> ↑ ↓ opacity. <b>Hold the left trigger</b> + stick to slowly slide the placed image along the surface for fine adjustments.</li>
+      <li><b>Projects:</b> <i>Save project</i> downloads a .zip with all layers, your settings and where the image is placed in the room. <i>Open project</i> loads it all back. The placement only works on this headset, opened from this same web address. If yours here is more recent than the project’s, you’ll be asked which one to use.</li>
+      <li><b>More ⚙</b> in the AR menu: grid size, square size, when to show the grid, forget the saved placement, and Exit.</li>
+      <li><kbd>A</kbd> / <kbd>X</kbd>: next layer. <kbd>B</kbd> / <kbd>Y</kbd>: bring the menu in front of you (use this if you lose it).</li>
+      <li><b>With your hands (no controllers):</b> tap menu buttons by touching them with your index finger, or point and pinch from a distance. A small ☰ button floats above your left wrist: tap it with your right index finger to bring the menu within reach.</li>
+      <li><b>Remembered placement:</b> wherever you place the image is saved in your room. Next time you start AR, look around for a moment and it reappears in the same spot, still locked if you locked it. Press <i>Place new</i> to skip it.</li>
+      <li><b>Undo</b> steps back through placing, sliding, width, rotation, depth and opacity changes.</li>
+      <li><b>Move the menu:</b> point at it and hold the grip button, or hold the trigger (or pinch) on its title bar, then move your hand. While holding, push the stick up/down to send it further away or bring it closer.</li>
+      <li><b>Snap:</b> when on, rotation moves in fixed steps (5°, 15°, 45° or 90°), so it's easy to keep the image straight.</li>
+      <li><b>Lock</b> before you start drawing, so you can't bump the position, size or rotation. Layers and opacity still work while locked.</li>
+      <li>Wall detection uses your Quest's Space Setup. If walls aren't found, run <i>Settings → Physical space → Space setup</i>.</li>
+    </ul>
+  </details>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="module" src="ar.js"></script>
+</body>
+</html>
